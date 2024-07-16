@@ -1,6 +1,11 @@
 #include "config.h"
 #include "triangle_mesh.h"
 #include "material.h"
+#include "linear_algebros.h"
+
+
+const int SCREEN_WIDTH=640;
+const int SCREEN_HEIGHT=480;
 
 unsigned int make_shader(const std::string& vertex_filepath,const std::string& fragment_filepath);
 unsigned int make_module(const std::string& filepath, unsigned int module_type);
@@ -16,7 +21,7 @@ int main()
         return -1;
     }
 
-    window = glfwCreateWindow(640,480,"OpenGL Window",NULL,NULL);
+    window = glfwCreateWindow(SCREEN_WIDTH,SCREEN_HEIGHT,"OpenGL Window",NULL,NULL);
     glfwMakeContextCurrent(window);
 
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -47,20 +52,45 @@ int main()
     glUniform1i(glGetUniformLocation(shader,"material"),0 );
     glUniform1i(glGetUniformLocation(shader,"mask"),1 );
 
+    vec3 quad_position = {-0.2f, 0.4f, 0.0f};
+
+    unsigned int model_location = glGetUniformLocation(shader,"model");
+    unsigned int view_location = glGetUniformLocation(shader,"view");
+    unsigned int proj_location = glGetUniformLocation(shader,"projection");
+
+
+    vec3 camera_pos = {-5.0f,0.0f,3.0f};
+    vec3 camera_target = {0.0f, 0.0f,0.0f};
+ 
+
+    mat4 view = create_look_at(camera_pos, camera_target);
+    glUniformMatrix4fv(view_location, 1, GL_FALSE, view.entries);
+
+    //anything closer than 0.1f wont be drawn and anything further from 10.0f wont be drawn
+    mat4 projection = create_perspective_projection(
+        45.0f,640.0f / 480.0f,0.1f,10.0f
+    );
+    glUniformMatrix4fv(proj_location, 1, GL_FALSE, projection.entries);
+
     //enable alpha blending
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA ,GL_ONE_MINUS_SRC_ALPHA);
 
     while (!glfwWindowShouldClose(window))
     {
-        glfwPollEvents();
-        
-        glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(shader);
-        material->use(0);
-        mask->use(1);
-        triangle->draw();
-        glfwSwapBuffers(window);
+         glfwPollEvents();
+
+		mat4 model = create_model_transform(quad_position, 10 * glfwGetTime());
+
+		glClear(GL_COLOR_BUFFER_BIT);
+		glUseProgram(shader);
+		//upload model matrix
+		glUniformMatrix4fv(model_location, 1, GL_FALSE, model.entries);
+		material->use(0);
+		mask->use(1);
+		triangle->draw();
+
+		glfwSwapBuffers(window);
     }
 
     glDeleteProgram(shader);
