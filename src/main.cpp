@@ -1,5 +1,6 @@
 #include "config.h"
 #include "triangle_mesh.h"
+#include "material.h"
 
 unsigned int make_shader(const std::string& vertex_filepath,const std::string& fragment_filepath);
 unsigned int make_module(const std::string& filepath, unsigned int module_type);
@@ -15,7 +16,7 @@ int main()
         return -1;
     }
 
-    window = glfwCreateWindow(640,480,"My Window",NULL,NULL);
+    window = glfwCreateWindow(640,480,"OpenGL Window",NULL,NULL);
     glfwMakeContextCurrent(window);
 
     if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -25,23 +26,47 @@ int main()
     }
 
     glClearColor(0.25f,0.5f,0.75f,1.0f);
+    
+    //Set the rendering region to the actual scene size
+    int w,h;
+    glfwGetFramebufferSize(window,&w,&h);
+    //(left,top,width,height)
+    glViewport(0,0,w,h);
+
+    
+    TriangleMesh* triangle = new TriangleMesh();
+    Material* material = new Material("../img/marika_matsumoto.jpg");
+    Material* mask = new Material("../img/mask.jpg");
 
     unsigned int shader = make_shader(
         "../src/shaders/vertex.txt",
         "../src/shaders/fragment.txt"
     );
-    TriangleMesh* triangle = new TriangleMesh();
+    // set texture units
+    glUseProgram(shader);
+    glUniform1i(glGetUniformLocation(shader,"material"),0 );
+    glUniform1i(glGetUniformLocation(shader,"mask"),1 );
+
+    //enable alpha blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA ,GL_ONE_MINUS_SRC_ALPHA);
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
         
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(shader);
+        material->use(0);
+        mask->use(1);
         triangle->draw();
         glfwSwapBuffers(window);
     }
 
     glDeleteProgram(shader);
+    delete triangle;
+    delete material;
+    delete mask;
     glfwTerminate();
     return 0;
 }

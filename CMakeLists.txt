@@ -13,9 +13,11 @@ add_subdirectory(dependencies/glfw EXCLUDE_FROM_ALL)
 
 add_executable(hello_window 
     src/config.h 
+    src/config.cpp
     src/main.cpp 
     src/glad.c
     src/triangle_mesh.cpp
+    src/material.cpp
 )
 
 target_include_directories(hello_window PRIVATE dependencies)
