@@ -18,7 +18,7 @@ add_executable(hello_window
     src/glad.c
     src/triangle_mesh.cpp
     src/material.cpp
-    src/linear_algebros.cpp
+  
 )
 
 target_include_directories(hello_window PRIVATE dependencies)
